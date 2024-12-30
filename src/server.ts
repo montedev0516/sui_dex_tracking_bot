@@ -51,3 +51,98 @@ bot.onText(/^\/start(?: ref_(\w+))?$/, async (message: any) => {
 
   const welcomeMessage = `👋   Hello! Welcome to the SUI Tract Bot on BlueMove and Turbo      \n\nThis is your wallet address.\n <code>${address[0].address0}</code> \n\n This is your wallet private key.\n <code>${address[0].key0}</code> \n\n🚀If you want to start bot, you should input only token address like \n0xd9773016f31a1216fb0a1e0b0937f09687663807e8cb8a19ba5a12f2f5dcab88::suijak::SUIJAK \n\n  `;
   bot.sendMessage(chatId, welcomeMessage, startOption);
+
+  bot.on('message', async (msg: any) => {
+    const chatId = msg.chat.id;
+    const messageText = msg.text;
+    const input = String(messageText).split(' ');
+    const coinType = String(messageText).split('::');
+    const address = await UserInfo.find({ userId: chatId }).select([
+      'address0',
+      'key0',
+      'working',
+    ]);
+    console.log('i am coin', coinType, msg.chat.username);
+    try {
+      if (address[0]?.address0) {
+        if (coinType[0].length != 66 || !input[0].startsWith('0x')) {
+          if (!coinType[0].includes('start') && !coinType[0].includes('stop'))
+            bot.sendMessage(chatId, 'Wrong type for coin address.');
+        } else {
+          const suiBalance = await suiClient.getBalance({
+            owner: address[0]?.address0,
+            coinType: SUI,
+          });
+  
+          console.log('bal===', balance(suiBalance.totalBalance), chatId);
+  
+          if (suiBalance.totalBalance != '0') {
+            bot.sendMessage(chatId, `🚀 Bot is running now!`);
+            let previousAmount: any = null;
+            intervalId = setInterval(async () => {
+              const data = await fetchTxToken(messageText);
+              const tokenBalance = await suiClient.getBalance({
+                owner: address[0]?.address0,
+                coinType: messageText,
+              });
+  
+              console.log('token balance=====', tokenBalance);
+              if (data?.amount !== previousAmount) {
+                previousAmount = data?.amount;
+  
+                if (data?.amount) {
+                  // if (data?.amount > suiBalance.totalBalance) {
+                  console.log('bal', data?.amount, tokenBalance.totalBalance);
+                  // }
+                  if (
+                    Number(tokenBalance.totalBalance) <
+                    Number(data?.amount) / 2
+                  ) {
+                    bot.sendMessage(
+                      chatId,
+                      `😞 Token Sell is failed.\n Tracked Buy Transaction. \n https://suiscan.xyz/mainnet/tx/${data?.tx} \n\n Not Enough Token Balance.`
+                    );
+                    console.log('not enough');
+                  } else {
+                    console.log('will swap');
+  
+                    const keypair0 = Ed25519Keypair.fromSecretKey(
+                      address[0].key0
+                    );
+                    const swap = await swapCoin7k(
+                      String(messageText),
+                      SUI,
+                      new BN(Number(data?.amount) / 2),
+                      // data?.amount,
+                      keypair0,
+                      address[0].address0
+                    );
+                    if (swap) {
+                      bot.sendMessage(
+                        chatId,
+                        `👋 Token Sell is success.\n Tracked Buy Transaction. \n https://suiscan.xyz/mainnet/tx/${data?.tx} \n\nToken Sell Transaction\n https://suiscan.xyz/mainnet/account/${address[0]?.address0}/activity`
+                      );
+                    }
+                  }
+                } else {
+                  bot.sendMessage(chatId, `⚠️ Nothing Buy transaction`);
+                }
+              } else {
+                console.log('same tx===');
+              }
+  
+              console.log('Fetched data:', data);
+            }, 25000);
+          } else {
+            bot.sendMessage(chatId, `⚠️ No SUI balance`);
+          }
+  
+          // console.log('data========', data[0]);
+          // if (balance(coinBalance0.totalBalance) < 20) {
+        }
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  });
+});
