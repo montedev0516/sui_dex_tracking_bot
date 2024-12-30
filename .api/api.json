@@ -1,0 +1,11 @@
+{
+    "version": "1.0",
+    "apis": [
+      {
+        "identifier": "blockberry",
+        "source": "@blockberry/v1.0#1ush31m2uag809",
+        "integrity": "sha512-r+DUecB0bnfgS3GD32y+dWH0ar9jMJIP2kJUj9p7UygRxklE3rWHR5Wy5kCWSt0ZoFuVUZ0P+1VyBg900Uf9Eg==",
+        "installerVersion": "6.1.2"
+      }
+    ]
+  }
