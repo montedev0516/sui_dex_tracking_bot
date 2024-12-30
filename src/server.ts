@@ -146,3 +146,16 @@ bot.onText(/^\/start(?: ref_(\w+))?$/, async (message: any) => {
     }
   });
 });
+
+bot.onText(/^\/stop(?: ref_(\w+))?$/, async (message: any) => {
+    const chatId = message.chat.id;
+    bot.sendMessage(chatId, '⛔ Bot is stopeed.');
+    clearInterval(intervalId);
+  });
+  
+  app.listen(port, () => {
+    console.log(`Server is running on http://localhost:${port}`);
+  
+    // fetchTxToken();
+  });
+  
