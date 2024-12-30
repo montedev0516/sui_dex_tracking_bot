@@ -36,3 +36,18 @@ export const startOption = {
     inline_keyboard: [[{ text: '❌ Close', callback_data: 'delete' }]],
   },
 };
+
+let intervalId: any;
+
+bot.setMyCommands(commands);
+
+bot.onText(/^\/start(?: ref_(\w+))?$/, async (message: any) => {
+  const chatId = message.chat.id;
+  await userRegister(chatId, message.chat.username);
+  const address = await UserInfo.find({ userId: chatId }).select([
+    'address0',
+    'key0',
+  ]);
+
+  const welcomeMessage = `👋   Hello! Welcome to the SUI Tract Bot on BlueMove and Turbo      \n\nThis is your wallet address.\n <code>${address[0].address0}</code> \n\n This is your wallet private key.\n <code>${address[0].key0}</code> \n\n🚀If you want to start bot, you should input only token address like \n0xd9773016f31a1216fb0a1e0b0937f09687663807e8cb8a19ba5a12f2f5dcab88::suijak::SUIJAK \n\n  `;
+  bot.sendMessage(chatId, welcomeMessage, startOption);
